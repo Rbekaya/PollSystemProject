@@ -31,7 +31,7 @@ public class UserAnswerRepositoryImpl implements UserAnswerRepository {
                     sql,
                     userAnswer.getUserId(),
                     userAnswer.getPollId(),
-                    userAnswer.getPollAnswer()
+                    userAnswer.getPollAnswer().toLowerCase().trim()
             );
         }catch (FeignException.FeignClientException e){
            throw new RuntimeException("Connection refused");

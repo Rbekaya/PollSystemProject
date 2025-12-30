@@ -3,6 +3,7 @@ package PoolProjectPool.example.PollQuestionSystem.service;
 import PoolProjectPool.example.PollQuestionSystem.dto.UserAnswerStatisticDto2;
 import PoolProjectPool.example.PollQuestionSystem.dto.UserAnswerStatisticDto3;
 import PoolProjectPool.example.PollQuestionSystem.dto.UserAnswerStatisticsDto1;
+import PoolProjectPool.example.PollQuestionSystem.model.Poll;
 import PoolProjectPool.example.PollQuestionSystem.service.internalUserClient.InternalUserService;
 import PoolProjectPool.example.PollQuestionSystem.model.UserAnswer;
 import PoolProjectPool.example.PollQuestionSystem.repository.UserAnswerRepository;
@@ -21,23 +22,39 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     UserAnswerRepository userAnswerRepository;
 
     @Autowired
-    InternalUserService internalUserService;
+    PollService pollService;
 
+    @Autowired
+    InternalUserService internalUserService;
 
     @Override
     public void createUserAnswer(UserAnswer userAnswer) {
-        List<InternalUser> allInternalUsers = internalUserService.getAllInternalUser();
-        Map<Long, String> registeredUsers = new HashMap<>();
+        if (userAnswer == null) {
+            System.out.println("You didn't provide an answer");
+            return;
+        }
 
-            for (InternalUser internalUser :allInternalUsers) {
-                String fullName = internalUser.getFirstName() + " " + internalUser.getLastName();
-                registeredUsers.putIfAbsent(internalUser.getUserId(), fullName);
+        try {
+            InternalUser internalUser = internalUserService.getInternalUserById(userAnswer.getUserId());
+        } catch (Exception e) {
+            throw new RuntimeException("user don't exist");
+        }
+
+        Poll pollQuestions = pollService.getPollQuestionById(userAnswer.getPollId());
+            System.out.println(pollQuestions);
+
+            if (pollQuestions == null) {
+                return;
             }
-                if (registeredUsers.containsKey(userAnswer.getUserId())) {
-                    userAnswerRepository.createUserAnswer(userAnswer);
-                } else {
-                    System.out.println("user not registered");
-                }
+
+            if ((pollQuestions.getFirstAnswer().toLowerCase().trim()).equals(userAnswer.getPollAnswer().toLowerCase().trim()) ||
+                    (pollQuestions.getSecondAnswer().toLowerCase().trim()).equals(userAnswer.getPollAnswer().toLowerCase().trim()) ||
+                    (pollQuestions.getThirdAnswer().toLowerCase().trim()).equals(userAnswer.getPollAnswer().toLowerCase().trim()) ||
+                    (pollQuestions.getFourthAnswer().toLowerCase().trim()).equals(userAnswer.getPollAnswer().toLowerCase().trim())) {
+                userAnswerRepository.createUserAnswer(userAnswer);
+            } else {
+                System.out.println("Answer must be one of the options!");
+            }
     }
 
     @Override
